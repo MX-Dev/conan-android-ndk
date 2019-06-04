@@ -29,7 +29,7 @@ TOOL_ABIS = {"x86": "i686",
 class AndroidToolchain(ConanFile):
     ndk_version = "r19c"
     name = "android-ndk-%s" % ndk_version
-    version = "0.1"
+    version = "0.2"
     license = "Apache-2.0"
     description = "Android NDK"
     url = "https://github.com/MX-Dev/conan-android-ndk"
@@ -228,11 +228,20 @@ class AndroidToolchain(ConanFile):
         # workaround clang warnings
         linker_flags.append("-Qunused-arguments")
 
+        if platform.system() == "Windows":
+            suffix = ".exe"
+        else:
+            suffix = ""
+
+        linker = "%s/ld.lld%s" % (llvm_toolchain_prefix, suffix)
+        linker_flags.append("-fuse-ld=%s" % linker)
+
         # generic flags
         linker_flags.extend(
-            ["-Wl,--build-id", "-Wl,--warn-shared-textrel", "-Wl,--fatal-warnings", "-Wl,--no-undefined"])
+            ["-Wl,--no-threads", "-Wl,--build-id", "-Wl,--warn-shared-textrel", "-Wl,--fatal-warnings", "-Wl,--no-undefined"])
         if self.settings.arch == "armv7":
             linker_flags.extend(["-Wl,--exclude-libs,libunwind.a"])
+
         # specific flags for executables
         pie_flags = ["-pie"]
         if self.settings.arch in ["x86", "x86_64"]:
@@ -242,15 +251,7 @@ class AndroidToolchain(ConanFile):
         exe_linker_flags = linker_flags[:]
         exe_linker_flags.extend(["-Wl,--gc-sections", "-Wl,-z,nocopyreloc"])
         exe_linker_flags.extend(pie_flags)
-
-        if platform.system() == "Windows":
-            suffix = ".exe"
-        else:
-            suffix = ""
-
-        linker = "%s/ld.lld%s" % (llvm_toolchain_prefix, suffix)
         self.cpp_info.cflags = compiler_flags
-        self.cpp_info.cflags.append("-fuse-ld=%s" % linker)
         self.cpp_info.cppflags = compiler_flags
         self.cpp_info.sharedlinkflags = linker_flags
         self.cpp_info.exelinkflags = exe_linker_flags
