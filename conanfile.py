@@ -27,9 +27,8 @@ TOOL_ABIS = {"x86": "i686",
 
 # noinspection PyUnresolvedReferences
 class AndroidToolchain(ConanFile):
-    ndk_version = "r20"
-    name = "android-ndk-%s" % ndk_version
-    version = "0.1"
+    name = "android-ndk"
+    version = "r20"
     license = "Apache-2.0"
     description = "Android NDK"
     url = "https://github.com/MX-Dev/conan-android-ndk"
@@ -129,10 +128,10 @@ class AndroidToolchain(ConanFile):
             raise Exception("Arch %s is not supported" % self.settings.arch)
 
     def source(self):
-        archive_map = {"Windows_AMD64": "android-ndk-%s-windows-x86_64.zip" % self.ndk_version,
-                       "Windows_x86": "android-ndk-%s-windows-x86.zip" % self.ndk_version,
-                       "Macos_x86_64": "android-ndk-%s-darwin-x86_64.zip" % self.ndk_version,
-                       "Linux_x86_64": "android-ndk-%s-linux-x86_64.zip" % self.ndk_version}
+        archive_map = {"Windows_AMD64": "android-ndk-%s-windows-x86_64.zip" % self.version,
+                       "Windows_x86": "android-ndk-%s-windows-x86.zip" % self.version,
+                       "Macos_x86_64": "android-ndk-%s-darwin-x86_64.zip" % self.version,
+                       "Linux_x86_64": "android-ndk-%s-linux-x86_64.zip" % self.version}
 
         archive = archive_map.get("%s_%s" % (platform.system(), platform.machine()))
         tools.get("https://dl.google.com/android/repository/%s" % archive)
