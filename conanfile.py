@@ -27,9 +27,9 @@ TOOL_ABIS = {"x86": "i686",
 
 # noinspection PyUnresolvedReferences
 class AndroidToolchain(ConanFile):
-    ndk_version = "r19c"
+    ndk_version = "r20"
     name = "android-ndk-%s" % ndk_version
-    version = "0.2"
+    version = "0.1"
     license = "Apache-2.0"
     description = "Android NDK"
     url = "https://github.com/MX-Dev/conan-android-ndk"
@@ -220,27 +220,14 @@ class AndroidToolchain(ConanFile):
         if int(str(self.settings.os.api_level)) < 21:
             linker_flags.append("-landroid_support")
 
-        # do not disable relro (default)
-        linker_flags.extend(["-Wl,-z,relro", "-Wl,-z,now"])
-
-        # disable execstack (default)
-        linker_flags.append("-Wl,-z,noexecstack")
-        # workaround clang warnings
-        linker_flags.append("-Qunused-arguments")
-
-        if platform.system() == "Windows":
-            suffix = ".exe"
-        else:
-            suffix = ""
-
-        linker = "%s/ld.lld%s" % (llvm_toolchain_prefix, suffix)
-        linker_flags.append("-fuse-ld=%s" % linker)
-
-        # generic flags
-        linker_flags.extend(
-            ["-Wl,--no-threads", "-Wl,--build-id", "-Wl,--warn-shared-textrel", "-Wl,--fatal-warnings", "-Wl,--no-undefined"])
+        linker_flags.extend(["-Wl,-z,relro", "-Wl,-z,now", "-Wl,-z,noexecstack", "-Qunused-arguments", "-fuse-ld=lld"])
+        linker_flags.extend(["-Wl,--build-id", "-Wl,--warn-shared-textrel", "-Wl,--fatal-warnings", "-Wl,--no-undefined"])
         if self.settings.arch == "armv7":
             linker_flags.extend(["-Wl,--exclude-libs,libunwind.a"])
+
+        # see https://github.com/android-ndk/ndk/issues/855
+        if platform.system() == "Windows":
+            linker_flags.append("-Wl,--no-threads")
 
         # specific flags for executables
         pie_flags = ["-pie"]
@@ -255,8 +242,8 @@ class AndroidToolchain(ConanFile):
         self.cpp_info.cppflags = compiler_flags
         self.cpp_info.sharedlinkflags = linker_flags
         self.cpp_info.exelinkflags = exe_linker_flags
-        clang = "%s/%s-clang" % (llvm_toolchain_prefix, self.tool_triple + str(self.settings.os.api_level))
-        clangxx = "%s/%s-clang++" % (llvm_toolchain_prefix, self.tool_triple + str(self.settings.os.api_level))
+        clang = "%s-clang" % (self.tool_triple + str(self.settings.os.api_level))
+        clangxx = "%s-clang++" % (self.tool_triple + str(self.settings.os.api_level))
         self.env_info.PATH.append(llvm_toolchain_prefix)
         self.env_info.CC = clang
         self.env_info.CXX = clangxx
@@ -269,10 +256,11 @@ class AndroidToolchain(ConanFile):
         # There is no env var for executable linker flags...
         self.env_info.LDFLAGS = " ".join(self.cpp_info.sharedlinkflags)
         self.env_info.LD = clang
-        self.env_info.AR = "%s/%s-ar%s" % (llvm_toolchain_prefix, self.header_triple, suffix)
-        self.env_info.RANLIB = "%s/%s-ranlib%s" % (llvm_toolchain_prefix, self.header_triple, suffix)
-        self.env_info.NM = "%s/%s-nm%s" % (llvm_toolchain_prefix, self.header_triple, suffix)
-        self.env_info.STRIP = "%s/%s-strip%s" % (llvm_toolchain_prefix, self.header_triple, suffix)
+        suffix = ".exe" if platform.system() == "Windows" else ""
+        self.env_info.AR = "%s-ar%s" % (self.header_triple, suffix)
+        self.env_info.RANLIB = "%s-ranlib%s" % (self.header_triple, suffix)
+        self.env_info.NM = "%s-nm%s" % (self.header_triple, suffix)
+        self.env_info.STRIP = "%s-strip%s" % (self.header_triple, suffix)
         # Provide a CMake Toolchain file, the two first flags are used inside android-toolchain.cmake
         if self.settings.arch == "armv7":
             self.env_info.CONAN_ANDROID_ARM_MODE = str(self.options.arm_mode)
