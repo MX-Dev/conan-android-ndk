@@ -17,10 +17,10 @@ class AndroidNdkTestConan(ConanFile):
         cmake.build()
 
     def test(self):
-        cmd = ".%sbin%shello" % (os.sep, os.sep)
+        bin_path = os.path.join("bin", "test_package")
         # Ensure it fails
         try:
-            self.run(cmd)
+            self.run(bin_path, run_environment=True)
         except:
             pass
         else:
