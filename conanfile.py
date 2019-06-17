@@ -219,14 +219,17 @@ class AndroidToolchain(ConanFile):
         if int(str(self.settings.os.api_level)) < 21:
             linker_flags.append("-landroid_support")
 
-        linker_flags.extend(["-Wl,-z,relro", "-Wl,-z,now", "-Wl,-z,noexecstack", "-Qunused-arguments", "-fuse-ld=lld"])
+        linker_flags.extend(["-Wl,-z,relro", "-Wl,-z,now", "-Wl,-z,noexecstack", "-Qunused-arguments"])
         linker_flags.extend(["-Wl,--build-id", "-Wl,--warn-shared-textrel", "-Wl,--fatal-warnings", "-Wl,--no-undefined"])
+
         if self.settings.arch == "armv7":
             linker_flags.extend(["-Wl,--exclude-libs,libunwind.a"])
 
-        # see https://github.com/android-ndk/ndk/issues/855
-        if platform.system() == "Windows":
-            linker_flags.append("-Wl,--no-threads")
+        # LLD: wait till r21, see https://github.com/android-ndk/ndk/issues/888
+        # linker_flags.append("-fuse-ld=lld")
+        # # see https://github.com/android-ndk/ndk/issues/855
+        # if platform.system() == "Windows":
+        #    linker_flags.append("-Wl,--no-threads")
 
         # specific flags for executables
         pie_flags = ["-pie"]
