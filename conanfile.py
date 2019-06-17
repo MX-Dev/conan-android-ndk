@@ -135,7 +135,7 @@ class AndroidToolchain(ConanFile):
 
         archive = archive_map.get("%s_%s" % (platform.system(), platform.machine()))
         tools.get("https://dl.google.com/android/repository/%s" % archive)
-        os.rename(self.name, self._source_subfolder)
+        os.rename("%s-%s" % (self.name, self.version), self._source_subfolder)
 
     def package(self):
         files_to_exclude = ["any", "chrono", "numeric", "optional", "ratio", "string_view", "system_error", "tuple"]
